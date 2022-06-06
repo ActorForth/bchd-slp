@@ -1,0 +1,34 @@
+version: "3"
+networks:
+  bchd-network:
+    external: true
+services:
+  bch-node:
+    image: bchd:latest
+    build: ./image/
+    container_name: bch-node
+    volumes:
+      - ./data/:/data
+      # - ./configs/bitcoincashnode.conf:/bitcoin.conf
+    restart: always
+    command: ["bchd", "-C", "/etc/bchd.conf", "-b", "/data"]
+    networks:
+      - bchd-network
+    ports:
+      - "8333:8333"
+    #   - "8335:8335"
+    #   - "8334:8334"
+    #   - "8081:8081"
+  gw:
+    image: bchd:latest
+    build: ./image/
+    container_name: gw
+    volumes:
+      - ./data/pki:/data/pki
+    restart: always
+    working_dir: /proxy
+    command: ["gw", "-http-addr", ":8080", "-bchd-grpc-url", "bch-node:8335", "-bchd-grpc-certpath", "/data/pki/server.crt"]
+    networks:
+      - bchd-network
+    ports:
+      - "1337:8080"
